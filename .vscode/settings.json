@@ -2,5 +2,13 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "python.formatting.provider": "black"
+    "antlr4.generation": {
+        "mode": "external",
+        "language": "Python3",
+        "listeners": false,
+        "visitors": true
+    },
+    "python.analysis.extraPaths": [
+        "./bazilio"
+    ]
 }

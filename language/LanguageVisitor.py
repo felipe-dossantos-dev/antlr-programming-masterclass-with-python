@@ -1,4 +1,4 @@
-# Generated from language/Language.g4 by ANTLR 4.13.1
+# Generated from /workspaces/antlr-programming-masterclass-with-python/language/Language.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .LanguageParser import LanguageParser

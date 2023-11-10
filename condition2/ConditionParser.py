@@ -1,4 +1,4 @@
-# Generated from condition2/Condition.g4 by ANTLR 4.13.1
+# Generated from /workspaces/antlr-programming-masterclass-with-python/condition2/Condition.g4 by ANTLR 4.13.1
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO

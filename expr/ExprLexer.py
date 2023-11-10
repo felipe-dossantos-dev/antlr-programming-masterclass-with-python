@@ -1,4 +1,4 @@
-# Generated from expr/Expr.g4 by ANTLR 4.13.1
+# Generated from /workspaces/antlr-programming-masterclass-with-python/expr/Expr.g4 by ANTLR 4.13.1
 from antlr4 import *
 from io import StringIO
 import sys
