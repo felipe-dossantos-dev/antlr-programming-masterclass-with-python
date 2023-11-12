@@ -64,8 +64,8 @@ class BazilioVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by BazilioParser#list.
-    def visitList(self, ctx:BazilioParser.ListContext):
+    # Visit a parse tree produced by BazilioParser#list_expression.
+    def visitList_expression(self, ctx:BazilioParser.List_expressionContext):
         return self.visitChildren(ctx)
 
 
@@ -161,6 +161,11 @@ class BazilioVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by BazilioParser#Gte.
     def visitGte(self, ctx:BazilioParser.GteContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by BazilioParser#ListExpr.
+    def visitListExpr(self, ctx:BazilioParser.ListExprContext):
         return self.visitChildren(ctx)
 
 

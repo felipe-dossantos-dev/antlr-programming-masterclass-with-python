@@ -47,15 +47,15 @@ public interface BazilioListener extends ParseTreeListener {
 	 */
 	void exitInstruction(BazilioParser.InstructionContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link BazilioParser#assigment}.
+	 * Enter a parse tree produced by {@link BazilioParser#assignment}.
 	 * @param ctx the parse tree
 	 */
-	void enterAssigment(BazilioParser.AssigmentContext ctx);
+	void enterAssignment(BazilioParser.AssignmentContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link BazilioParser#assigment}.
+	 * Exit a parse tree produced by {@link BazilioParser#assignment}.
 	 * @param ctx the parse tree
 	 */
-	void exitAssigment(BazilioParser.AssigmentContext ctx);
+	void exitAssignment(BazilioParser.AssignmentContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link BazilioParser#input_}.
 	 * @param ctx the parse tree
@@ -117,15 +117,15 @@ public interface BazilioListener extends ParseTreeListener {
 	 */
 	void exitWhile_(BazilioParser.While_Context ctx);
 	/**
-	 * Enter a parse tree produced by {@link BazilioParser#list}.
+	 * Enter a parse tree produced by {@link BazilioParser#list_expression}.
 	 * @param ctx the parse tree
 	 */
-	void enterList(BazilioParser.ListContext ctx);
+	void enterList_expression(BazilioParser.List_expressionContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link BazilioParser#list}.
+	 * Exit a parse tree produced by {@link BazilioParser#list_expression}.
 	 * @param ctx the parse tree
 	 */
-	void exitList(BazilioParser.ListContext ctx);
+	void exitList_expression(BazilioParser.List_expressionContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link BazilioParser#list_add}.
 	 * @param ctx the parse tree
@@ -346,6 +346,18 @@ public interface BazilioListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitGte(BazilioParser.GteContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code ListExpr}
+	 * labeled alternative in {@link BazilioParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterListExpr(BazilioParser.ListExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code ListExpr}
+	 * labeled alternative in {@link BazilioParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitListExpr(BazilioParser.ListExprContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code Neq}
 	 * labeled alternative in {@link BazilioParser#expression}.

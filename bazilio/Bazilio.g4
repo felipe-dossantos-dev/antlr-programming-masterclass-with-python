@@ -35,7 +35,7 @@ condition:
 
 while_: 'while' expression LEFT_BAR instructions RIGHT_BAR;
 
-list: '{' expression* '}';
+list_expression: '{' expression* '}';
 
 list_add: VAR '<<' expression;
 
@@ -61,6 +61,7 @@ expression:
 	| VAR								# Var
 	| NUM								# Value
 	| STRING							# String
+	| list_expression					# ListExpr
 	| list_size							# ListSize
 	| list_query						# ListQuery
 	| NOTE								# Note;
@@ -84,11 +85,11 @@ GTE: '>=';
 EQ: '=';
 NEQ: '/=';
 
+NOTE: [A-G][0-9]?;
 NUM: '-'?[0-9]+;
-VAR: [a-zA-Z][a-zA-Z0-9_]*;
+VAR: [A-Za-z][a-zA-Z0-9_]*;
 PROCEDURE_NAME: [A-Z][a-zA-Z0-9_]*;
 STRING: '"' ('\\' . | ~('\\' | '"'))* '"';
-NOTE: [A-G][0-9]?;
 
 LEFT_BAR: '|:';
 RIGHT_BAR: ':|';

@@ -64,13 +64,13 @@ public class BazilioBaseListener implements BazilioListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterAssigment(BazilioParser.AssigmentContext ctx) { }
+	@Override public void enterAssignment(BazilioParser.AssignmentContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitAssigment(BazilioParser.AssigmentContext ctx) { }
+	@Override public void exitAssignment(BazilioParser.AssignmentContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -148,13 +148,13 @@ public class BazilioBaseListener implements BazilioListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterList(BazilioParser.ListContext ctx) { }
+	@Override public void enterList_expression(BazilioParser.List_expressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitList(BazilioParser.ListContext ctx) { }
+	@Override public void exitList_expression(BazilioParser.List_expressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -383,6 +383,18 @@ public class BazilioBaseListener implements BazilioListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitGte(BazilioParser.GteContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterListExpr(BazilioParser.ListExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitListExpr(BazilioParser.ListExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

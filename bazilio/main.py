@@ -40,6 +40,10 @@ class EvalVisitor(BazilioVisitor):
         self.visit(procedure_def_model.instructions)
         self.stack.pop()
 
+    @property
+    def actual_stack(self):
+        return self.stack[0]
+
     def visitRoot(self, ctx: BazilioParser.RootContext):
         return self.visitChildren(ctx)
 
@@ -52,10 +56,10 @@ class EvalVisitor(BazilioVisitor):
     def visitInstruction(self, ctx: BazilioParser.InstructionContext):
         return self.visitChildren(ctx)
 
-    def visitAssignment(self, ctx:BazilioParser.AssignmentContext):
+    def visitAssignment(self, ctx: BazilioParser.AssignmentContext):
         var_name = ctx.VAR().getText()
         expr = self.visit(ctx.expression())
-        self.stack[0][var_name] = expr
+        self.actual_stack[var_name] = expr
         return self.visitChildren(ctx)
 
     def visitInput_(self, ctx: BazilioParser.Input_Context):
@@ -76,9 +80,6 @@ class EvalVisitor(BazilioVisitor):
     def visitWhile_(self, ctx: BazilioParser.While_Context):
         return self.visitChildren(ctx)
 
-    def visitList(self, ctx: BazilioParser.ListContext):
-        return self.visitChildren(ctx)
-
     def visitList_add(self, ctx: BazilioParser.List_addContext):
         return self.visitChildren(ctx)
 
@@ -93,88 +94,91 @@ class EvalVisitor(BazilioVisitor):
     ):
         return self.visitChildren(ctx)
 
-    def visitAdd(self, ctx: BazilioParser.AddContext):
+    def visitAdd(self, ctx: BazilioParser.AddContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return left + right
 
-    def visitSub(self, ctx: BazilioParser.SubContext):
+    def visitSub(self, ctx: BazilioParser.SubContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return left - right
 
-    def visitParenteses(self, ctx: BazilioParser.ParentesesContext):
-        return self.visitChildren(ctx)
+    def visitParenteses(self, ctx: BazilioParser.ParentesesContext):  #
+        return self.visit(ctx.expression())
 
-    def visitMod(self, ctx: BazilioParser.ModContext):
+    def visitMod(self, ctx: BazilioParser.ModContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return left % right
 
-    def visitMul(self, ctx: BazilioParser.MulContext):
+    def visitMul(self, ctx: BazilioParser.MulContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return left * right
 
-    def visitVar(self, ctx: BazilioParser.VarContext):
-        actual_stack = self.stack[0]
-        return actual_stack[ctx.VAR().getText()]
+    def visitVar(self, ctx: BazilioParser.VarContext):  #
+        var_name = ctx.VAR().getText()
+        if var_name not in self.actual_stack:
+            return 0
+        return self.actual_stack[var_name]
 
-    def visitLt(self, ctx: BazilioParser.LtContext):
+    def visitLt(self, ctx: BazilioParser.LtContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return 1 if left < right else 0
 
-    def visitString(self, ctx: BazilioParser.StringContext):
-        return self.visitChildren(ctx)
+    def visitString(self, ctx: BazilioParser.StringContext):  #
+        return ctx.STRING().getText()
 
-    def visitEq(self, ctx: BazilioParser.EqContext):
+    def visitEq(self, ctx: BazilioParser.EqContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return 1 if left == right else 0
 
-    def visitGt(self, ctx: BazilioParser.GtContext):
+    def visitGt(self, ctx: BazilioParser.GtContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return 1 if left > right else 0
 
-    def visitDiv(self, ctx: BazilioParser.DivContext):
+    def visitDiv(self, ctx: BazilioParser.DivContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
-        return left / right
+        if right == 0:
+            raise BazilioException("cannot divide by zero")
+        return int(left / right)
 
-    def visitListSize(self, ctx: BazilioParser.ListSizeContext):
-        # TODO - expr not implemented
-        return self.visitChildren(ctx)
+    def visitNote(self, ctx: BazilioParser.NoteContext): # 
+        note_str = ctx.NOTE().getText()
+        if len(note_str) == 1:
+            note_str += "4"
+        return NOTES[note_str]
 
-    def visitNote(self, ctx: BazilioParser.NoteContext):
-        # TODO - expr not implemented
-        return self.visitChildren(ctx)
-
-    def visitValue(self, ctx: BazilioParser.ValueContext):
+    def visitValue(self, ctx: BazilioParser.ValueContext):  #
         return int(ctx.NUM().getText())
 
-    def visitGte(self, ctx: BazilioParser.GteContext):
+    def visitGte(self, ctx: BazilioParser.GteContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return 1 if left >= right else 0
 
-    def visitNeq(self, ctx: BazilioParser.NeqContext):
+    def visitNeq(self, ctx: BazilioParser.NeqContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return 1 if left != right else 0
 
-    def visitLte(self, ctx: BazilioParser.LteContext):
+    def visitLte(self, ctx: BazilioParser.LteContext):  #
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return 1 if left <= right else 0
-
-    def visitListQuery(self, ctx: BazilioParser.ListQueryContext):
-        # dentro do expression
-        return self.visitChildren(ctx)
+    
+    def visitList_expression(self, ctx:BazilioParser.List_expressionContext): # 
+        return [self.visit(c) for c in ctx.expression()]
 
     def visitList_size(self, ctx: BazilioParser.List_sizeContext):
-        return self.visitChildren(ctx)
+        var_name = ctx.VAR().getText()
+        return len(self.actual_stack[var_name])
 
     def visitList_query(self, ctx: BazilioParser.List_queryContext):
+        var_name = ctx.VAR().getText()
         return self.visitChildren(ctx)
