@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from antlr4 import *
 from BazilioLexer import BazilioLexer
 from BazilioParser import BazilioParser
@@ -264,17 +265,146 @@ class TestEvalVisitor(unittest.TestCase):
         # assert
         self.assertEqual(result, [1, 0])
 
-    def test_visitList_size(self):
+    def test_visitListSize(self):
         # arrange
         parser = self.get_parser("#myVar")
         ctx = parser.expression()
         self.eval_visitor.stack.append({"myVar" : [0, 1]})
 
         # act
-        result = self.eval_visitor.visitList_size(ctx)
+        result = self.eval_visitor.visitListSize(ctx)
 
         # assert
         self.assertEqual(result, 2)
+
+    def test_visitListQuery(self):
+        # arrange
+        parser = self.get_parser("myVar[0 + 1]")
+        ctx = parser.expression()
+        self.eval_visitor.stack.append({"myVar" : [0, 1]})
+
+        # act
+        result = self.eval_visitor.visitListQuery(ctx)
+
+        # assert
+        self.assertEqual(result, 1)
+
+    def test_visitList_add(self):
+        # arrange
+        parser = self.get_parser("myList << 5")
+        ctx = parser.list_add()
+        self.eval_visitor.stack.append({"myList" : [0, 1]})
+
+        # act
+        self.eval_visitor.visitList_add(ctx)
+
+        # assert
+        my_list = self.eval_visitor.actual_stack["myList"]
+        self.assertEqual(3, len(my_list))
+        self.assertEqual(5, my_list[2])
+
+    def test_visitList_cut(self):
+        # arrange
+        parser = self.get_parser("8< myList[4]")
+        ctx = parser.list_cut()
+
+        parser2 = self.get_parser("8< myList[1]")
+        ctx2 = parser2.list_cut()
+
+        self.eval_visitor.stack.append({"myList" : [0, 1]})
+        
+        # act
+        with self.assertRaises(BazilioException) as context:
+            self.eval_visitor.visitList_cut(ctx)
+
+        self.eval_visitor.visitList_cut(ctx2)
+
+        # assert
+        my_list = self.eval_visitor.actual_stack["myList"]
+        self.assertEqual(1, len(my_list))
+        self.assertEqual(0, my_list[0])
+
+    @patch("builtins.input", return_value="12")
+    def test_input_good(self, mock_input):
+        # arrange
+        parser = self.get_parser("<?> myVar")
+        ctx = parser.input_()
+        self.eval_visitor.stack.append({})
+
+        # act
+        self.eval_visitor.visitInput_(ctx)
+
+        # assert
+        myVar = self.eval_visitor.actual_stack["myVar"]
+        self.assertEqual(myVar, 12)
+
+    def test_visitOutput_(self):
+        # arrange
+        parser = self.get_parser("<w> myVar")
+        ctx = parser.output_()
+        self.eval_visitor.stack.append({"myVar" : 1})
+
+        # act
+        self.eval_visitor.visitOutput_(ctx)
+
+        # assert
+        self.assertEqual([1], self.eval_visitor.outputs)
+
+    def test_visitReproduction(self):
+        # arrange
+        parser = self.get_parser("(:) 1 + 2")
+        ctx = parser.reproduction()
+
+        # act
+        self.eval_visitor.visitReproduction(ctx)
+
+        # assert
+        self.assertEqual([3], self.eval_visitor.score)
+
+    def test_visitWhile_(self):
+        # arrange
+        self.eval_visitor.stack.append({})
+        parser = self.get_parser("myVar <- 1")
+        ctx = parser.assignment()
+        self.eval_visitor.visitAssignment(ctx)
+
+        parser = self.get_parser("while myVar < 3 myVar <- myVar + 1")
+        ctx = parser.while_()
+
+        # act
+        self.eval_visitor.visitWhile_(ctx)
+
+        # assert
+        self.assertEqual(3, self.eval_visitor.actual_stack["myVar"])
+
+    def test_visitCondition(self):
+        # 'if' expression LEFT_BAR instructions RIGHT_BAR ('else' LEFT_BAR instructions RIGHT_BAR)?;
+        # arrange
+        self.eval_visitor.stack.append({})
+        parser = self.get_parser("myVar <- 1")
+        ctx = parser.assignment()
+        self.eval_visitor.visitAssignment(ctx)
+
+        parser = self.get_parser("if myVar = 1 |: result <- 2 :|")
+        ctx = parser.condition()
+
+        parser2 = self.get_parser("if myVar /= 1 |: result2 <- 2 :| else |: result2 <- 3 :|")
+        ctx2 = parser2.condition()
+
+        parser2 = self.get_parser("if myVar = 1 |: result3 <- 2 :| else |: result3 <- 3 :|")
+        ctx2 = parser2.condition()
+
+        # act
+        self.eval_visitor.visitCondition(ctx)
+        self.eval_visitor.visitCondition(ctx2)
+
+        # assert
+        self.assertEqual(2, self.eval_visitor.actual_stack["result"])
+        self.assertEqual(3, self.eval_visitor.actual_stack["result2"])
+        self.assertEqual(3, self.eval_visitor.actual_stack["result3"])
+
+    
+    
 
 
 

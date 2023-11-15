@@ -15,7 +15,7 @@ class EvalVisitor(BazilioVisitor):
     ) -> None:
         super().__init__()
         self.stack = deque()
-        self.results = []
+        self.outputs = []
         self.score = []
         self.procedures_definition = {}
         self.entry_procedure = entry_procedure
@@ -44,18 +44,6 @@ class EvalVisitor(BazilioVisitor):
     def actual_stack(self):
         return self.stack[0]
 
-    def visitRoot(self, ctx: BazilioParser.RootContext):
-        return self.visitChildren(ctx)
-
-    def visitProcedure(self, ctx: BazilioParser.ProcedureContext):
-        return self.visitChildren(ctx)
-
-    def visitInstructions(self, ctx: BazilioParser.InstructionsContext):
-        return self.visitChildren(ctx)
-
-    def visitInstruction(self, ctx: BazilioParser.InstructionContext):
-        return self.visitChildren(ctx)
-
     def visitAssignment(self, ctx: BazilioParser.AssignmentContext):
         var_name = ctx.VAR().getText()
         expr = self.visit(ctx.expression())
@@ -63,28 +51,46 @@ class EvalVisitor(BazilioVisitor):
         return self.visitChildren(ctx)
 
     def visitInput_(self, ctx: BazilioParser.Input_Context):
-        return self.visitChildren(ctx)
+        var_name = ctx.VAR().getText()
+        input_value = int(input(f"<?> {var_name}"))
+        self.actual_stack[var_name] = input_value
 
     def visitOutput_(self, ctx: BazilioParser.Output_Context):
-        return self.visitChildren(ctx)
+        var_name = ctx.VAR().getText()
+        var_value = self.actual_stack[var_name]
+        self.outputs.append(var_value)
 
     def visitReproduction(self, ctx: BazilioParser.ReproductionContext):
-        return self.visitChildren(ctx)
+        expr_value = self.visit(ctx.expression())
+        self.score.append(expr_value)
 
     def visitParameters(self, ctx: BazilioParser.ParametersContext):
         return self.visitChildren(ctx)
 
     def visitCondition(self, ctx: BazilioParser.ConditionContext):
-        return self.visitChildren(ctx)
+        expr = self.visit(ctx.expression())
+        if expr == 1:
+            inss = ctx.instructions(0)
+            self.visit(inss)
+        elif ctx.instructions(1):
+            self.visit(ctx.instructions(1))
 
     def visitWhile_(self, ctx: BazilioParser.While_Context):
-        return self.visitChildren(ctx)
+        while self.visit(ctx.getChild(1)) == 1:
+            self.visit(ctx.getChild(3))
 
     def visitList_add(self, ctx: BazilioParser.List_addContext):
-        return self.visitChildren(ctx)
+        var_name = ctx.VAR().getText()
+        expr = self.visit(ctx.expression())
+        self.actual_stack[var_name].append(expr)
 
     def visitList_cut(self, ctx: BazilioParser.List_cutContext):
-        return self.visitChildren(ctx)
+        var_name = ctx.VAR().getText()
+        index = self.visit(ctx.expression())
+        var_list = self.actual_stack[var_name]
+        if index >= len(var_list):
+            raise BazilioException("index out of range")
+        var_list.remove(index)
 
     def visitProcedure_call(self, ctx: BazilioParser.Procedure_callContext):
         return self.visitChildren(ctx)
@@ -148,7 +154,7 @@ class EvalVisitor(BazilioVisitor):
             raise BazilioException("cannot divide by zero")
         return int(left / right)
 
-    def visitNote(self, ctx: BazilioParser.NoteContext): # 
+    def visitNote(self, ctx: BazilioParser.NoteContext):  #
         note_str = ctx.NOTE().getText()
         if len(note_str) == 1:
             note_str += "4"
@@ -171,14 +177,16 @@ class EvalVisitor(BazilioVisitor):
         left = self.visit(ctx.getChild(0))
         right = self.visit(ctx.getChild(2))
         return 1 if left <= right else 0
-    
-    def visitList_expression(self, ctx:BazilioParser.List_expressionContext): # 
+
+    def visitList_expression(self, ctx: BazilioParser.List_expressionContext):  #
         return [self.visit(c) for c in ctx.expression()]
 
-    def visitList_size(self, ctx: BazilioParser.List_sizeContext):
+    def visitList_size(self, ctx: BazilioParser.List_sizeContext):  #
         var_name = ctx.VAR().getText()
         return len(self.actual_stack[var_name])
 
-    def visitList_query(self, ctx: BazilioParser.List_queryContext):
+    def visitList_query(self, ctx: BazilioParser.List_queryContext):  #
         var_name = ctx.VAR().getText()
-        return self.visitChildren(ctx)
+        index = self.visit(ctx.expression())
+        var = self.actual_stack[var_name]
+        return var[index]

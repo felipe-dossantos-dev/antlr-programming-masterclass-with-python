@@ -3,3 +3,4 @@ antlr4-tools
 black
 icecream
 pydantic
+pytest
