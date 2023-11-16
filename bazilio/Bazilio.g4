@@ -22,7 +22,7 @@ assignment: VAR '<-' expression;
 
 input_: '<?>' VAR;
 
-output_: '<w>' VAR;
+output_: '<w>' (VAR | STRING);
 
 reproduction: '(:)' expression;
 
@@ -86,10 +86,10 @@ EQ: '=';
 NEQ: '/=';
 
 NOTE: [A-G][0-9]?;
-NUM: '-'?[0-9]+;
-VAR: [A-Za-z][a-zA-Z0-9_]*;
+NUM: '-'? [0-9]+;
 PROCEDURE_NAME: [A-Z][a-zA-Z0-9_]*;
 STRING: '"' ('\\' . | ~('\\' | '"'))* '"';
+VAR: [A-Za-z][a-zA-Z0-9_]*;
 
 LEFT_BAR: '|:';
 RIGHT_BAR: ':|';

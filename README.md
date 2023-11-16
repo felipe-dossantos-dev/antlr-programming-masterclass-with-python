@@ -5,6 +5,6 @@ antlr4 -Dlanguage=Python3 -visitor -no-listener  expr/Expr.g4
 
 ## TODO
 [X] while_
-[ ] condition
-[ ] procedure
-[ ] procedure_call
+[X] condition
+[X] procedure definition
+[X] procedure_call

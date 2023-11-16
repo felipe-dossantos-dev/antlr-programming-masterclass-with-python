@@ -109,7 +109,7 @@ class TestEvalVisitor(unittest.TestCase):
         # arrange
         parser = self.get_parser("myVar")
         ctx = parser.expression()
-        self.eval_visitor.stack.append({"myVar" : 42})
+        self.eval_visitor.stack.append({"myVar": 42})
 
         parser2 = self.get_parser("myVar2")
         ctx2 = parser2.expression()
@@ -171,7 +171,7 @@ class TestEvalVisitor(unittest.TestCase):
         result = self.eval_visitor.visitString(ctx)
 
         # assert
-        self.assertEqual(result, '"mystring"')
+        self.assertEqual(result, 'mystring')
 
     def test_visitDiv(self):
         # arrange
@@ -192,10 +192,10 @@ class TestEvalVisitor(unittest.TestCase):
 
     def test_visitNote(self):
         # arrange
-        parser = self.get_parser('A0')
+        parser = self.get_parser("A0")
         ctx = parser.expression()
 
-        parser2 = self.get_parser('A')
+        parser2 = self.get_parser("A")
         ctx2 = parser2.expression()
 
         # act
@@ -256,7 +256,7 @@ class TestEvalVisitor(unittest.TestCase):
 
     def test_visitListExpr(self):
         # arrange
-        parser = self.get_parser('{ 1 0 }')
+        parser = self.get_parser("{ 1 0 }")
         ctx = parser.list_expression()
 
         # act
@@ -269,7 +269,7 @@ class TestEvalVisitor(unittest.TestCase):
         # arrange
         parser = self.get_parser("#myVar")
         ctx = parser.expression()
-        self.eval_visitor.stack.append({"myVar" : [0, 1]})
+        self.eval_visitor.stack.append({"myVar": [0, 1]})
 
         # act
         result = self.eval_visitor.visitListSize(ctx)
@@ -281,7 +281,7 @@ class TestEvalVisitor(unittest.TestCase):
         # arrange
         parser = self.get_parser("myVar[0 + 1]")
         ctx = parser.expression()
-        self.eval_visitor.stack.append({"myVar" : [0, 1]})
+        self.eval_visitor.stack.append({"myVar": [0, 1]})
 
         # act
         result = self.eval_visitor.visitListQuery(ctx)
@@ -293,7 +293,7 @@ class TestEvalVisitor(unittest.TestCase):
         # arrange
         parser = self.get_parser("myList << 5")
         ctx = parser.list_add()
-        self.eval_visitor.stack.append({"myList" : [0, 1]})
+        self.eval_visitor.stack.append({"myList": [0, 1]})
 
         # act
         self.eval_visitor.visitList_add(ctx)
@@ -311,8 +311,8 @@ class TestEvalVisitor(unittest.TestCase):
         parser2 = self.get_parser("8< myList[1]")
         ctx2 = parser2.list_cut()
 
-        self.eval_visitor.stack.append({"myList" : [0, 1]})
-        
+        self.eval_visitor.stack.append({"myList": [0, 1]})
+
         # act
         with self.assertRaises(BazilioException) as context:
             self.eval_visitor.visitList_cut(ctx)
@@ -342,7 +342,7 @@ class TestEvalVisitor(unittest.TestCase):
         # arrange
         parser = self.get_parser("<w> myVar")
         ctx = parser.output_()
-        self.eval_visitor.stack.append({"myVar" : 1})
+        self.eval_visitor.stack.append({"myVar": 1})
 
         # act
         self.eval_visitor.visitOutput_(ctx)
@@ -368,7 +368,7 @@ class TestEvalVisitor(unittest.TestCase):
         ctx = parser.assignment()
         self.eval_visitor.visitAssignment(ctx)
 
-        parser = self.get_parser("while myVar < 3 myVar <- myVar + 1")
+        parser = self.get_parser("while myVar < 3 |: myVar <- myVar + 1 :|")
         ctx = parser.while_()
 
         # act
@@ -378,7 +378,6 @@ class TestEvalVisitor(unittest.TestCase):
         self.assertEqual(3, self.eval_visitor.actual_stack["myVar"])
 
     def test_visitCondition(self):
-        # 'if' expression LEFT_BAR instructions RIGHT_BAR ('else' LEFT_BAR instructions RIGHT_BAR)?;
         # arrange
         self.eval_visitor.stack.append({})
         parser = self.get_parser("myVar <- 1")
@@ -388,25 +387,55 @@ class TestEvalVisitor(unittest.TestCase):
         parser = self.get_parser("if myVar = 1 |: result <- 2 :|")
         ctx = parser.condition()
 
-        parser2 = self.get_parser("if myVar /= 1 |: result2 <- 2 :| else |: result2 <- 3 :|")
+        parser2 = self.get_parser(
+            "if myVar /= 1 |: result2 <- 2 :| else |: result2 <- 3 :|"
+        )
         ctx2 = parser2.condition()
 
-        parser2 = self.get_parser("if myVar = 1 |: result3 <- 2 :| else |: result3 <- 3 :|")
-        ctx2 = parser2.condition()
+        parser3 = self.get_parser(
+            "if myVar = 1 |: result3 <- 2 :| else |: result3 <- 3 :|"
+        )
+        ctx3 = parser3.condition()
 
         # act
         self.eval_visitor.visitCondition(ctx)
         self.eval_visitor.visitCondition(ctx2)
+        self.eval_visitor.visitCondition(ctx3)
 
         # assert
         self.assertEqual(2, self.eval_visitor.actual_stack["result"])
         self.assertEqual(3, self.eval_visitor.actual_stack["result2"])
-        self.assertEqual(3, self.eval_visitor.actual_stack["result3"])
+        self.assertEqual(2, self.eval_visitor.actual_stack["result3"])
 
-    
-    
+    def test_visitProcedure(self):
+        # arrange
+        self.eval_visitor.stack.append({})
+        parser = self.get_parser("""Main |: <w> "Hello Bazilio" :|""")
+        ctx = parser.procedure()
 
+        # act
+        self.eval_visitor.visitProcedure(ctx)
 
+        # assert
+        self.assertEqual(2, len(self.eval_visitor.procedures_definition))
+        proc_def = self.eval_visitor.procedures_definition["Main"]
+        self.assertEqual("Main", proc_def.name)
+
+    def test_visitProcedure_call(self):
+        # arrange
+        self.eval_visitor.stack.append({})
+        parser = self.get_parser("""Main |: <w> "Hello Bazilio" :|""")
+        ctx = parser.procedure()
+        self.eval_visitor.visitProcedure(ctx)
+
+        parser = self.get_parser("""Main""")
+        ctx = parser.procedure_call()
+
+        # act
+        self.eval_visitor.visitProcedure_call(ctx)
+
+        # assert
+        self.assertEqual(["Hello Bazilio"], self.eval_visitor.outputs)
 
 
 if __name__ == "__main__":

@@ -43,12 +43,19 @@ class EvalVisitor(BazilioVisitor):
     @property
     def actual_stack(self):
         return self.stack[0]
+    
+    def visitProcedure(self, ctx:BazilioParser.ProcedureContext):
+        proc_def = ProcedureDefinition(
+            name=ctx.PROCEDURE_NAME().getText(),
+            args=self.visit(ctx.parameters()),
+            instructions=ctx.instructions(),
+        )
+        self.procedures_definition[proc_def.name] = proc_def
 
     def visitAssignment(self, ctx: BazilioParser.AssignmentContext):
         var_name = ctx.VAR().getText()
         expr = self.visit(ctx.expression())
         self.actual_stack[var_name] = expr
-        return self.visitChildren(ctx)
 
     def visitInput_(self, ctx: BazilioParser.Input_Context):
         var_name = ctx.VAR().getText()
@@ -56,16 +63,20 @@ class EvalVisitor(BazilioVisitor):
         self.actual_stack[var_name] = input_value
 
     def visitOutput_(self, ctx: BazilioParser.Output_Context):
-        var_name = ctx.VAR().getText()
-        var_value = self.actual_stack[var_name]
-        self.outputs.append(var_value)
+        if ctx.VAR() is None:
+            value = self.treat_string(ctx.STRING())
+        else:
+            var_name = ctx.VAR().getText()
+            value = self.actual_stack[var_name]
+        
+        self.outputs.append(value)
 
     def visitReproduction(self, ctx: BazilioParser.ReproductionContext):
         expr_value = self.visit(ctx.expression())
         self.score.append(expr_value)
 
     def visitParameters(self, ctx: BazilioParser.ParametersContext):
-        return self.visitChildren(ctx)
+        return [child.getText() for child in ctx.VAR()]
 
     def visitCondition(self, ctx: BazilioParser.ConditionContext):
         expr = self.visit(ctx.expression())
@@ -93,12 +104,14 @@ class EvalVisitor(BazilioVisitor):
         var_list.remove(index)
 
     def visitProcedure_call(self, ctx: BazilioParser.Procedure_callContext):
-        return self.visitChildren(ctx)
+        param_values = self.visit(ctx.procedure_call_parameters())
+        proc_name = ctx.PROCEDURE_NAME().getText()
+        self.procedure_invocation(proc_name, param_values)
 
     def visitProcedure_call_parameters(
         self, ctx: BazilioParser.Procedure_call_parametersContext
     ):
-        return self.visitChildren(ctx)
+        return [self.visit(child) for child in ctx.expression()]
 
     def visitAdd(self, ctx: BazilioParser.AddContext):  #
         left = self.visit(ctx.getChild(0))
@@ -135,7 +148,10 @@ class EvalVisitor(BazilioVisitor):
         return 1 if left < right else 0
 
     def visitString(self, ctx: BazilioParser.StringContext):  #
-        return ctx.STRING().getText()
+        return self.treat_string(ctx.STRING())
+    
+    def treat_string(self, node):
+        return node.getText().replace('"', '')
 
     def visitEq(self, ctx: BazilioParser.EqContext):  #
         left = self.visit(ctx.getChild(0))
