@@ -171,7 +171,7 @@ class TestEvalVisitor(unittest.TestCase):
         result = self.eval_visitor.visitString(ctx)
 
         # assert
-        self.assertEqual(result, 'mystring')
+        self.assertEqual(result, "mystring")
 
     def test_visitDiv(self):
         # arrange
@@ -287,7 +287,7 @@ class TestEvalVisitor(unittest.TestCase):
         result = self.eval_visitor.visitListQuery(ctx)
 
         # assert
-        self.assertEqual(result, 1)
+        self.assertEqual(result, 0)
 
     def test_visitList_add(self):
         # arrange
@@ -322,7 +322,7 @@ class TestEvalVisitor(unittest.TestCase):
         # assert
         my_list = self.eval_visitor.actual_stack["myList"]
         self.assertEqual(1, len(my_list))
-        self.assertEqual(0, my_list[0])
+        self.assertEqual(1, my_list[0])
 
     @patch("builtins.input", return_value="12")
     def test_input_good(self, mock_input):
@@ -340,7 +340,7 @@ class TestEvalVisitor(unittest.TestCase):
 
     def test_visitOutput_(self):
         # arrange
-        parser = self.get_parser("<w> myVar")
+        parser = self.get_parser('<w> myVar "->" myVar')
         ctx = parser.output_()
         self.eval_visitor.stack.append({"myVar": 1})
 
@@ -348,7 +348,7 @@ class TestEvalVisitor(unittest.TestCase):
         self.eval_visitor.visitOutput_(ctx)
 
         # assert
-        self.assertEqual([1], self.eval_visitor.outputs)
+        self.assertEqual(["1 -> 1"], self.eval_visitor.outputs)
 
     def test_visitReproduction(self):
         # arrange
@@ -436,6 +436,105 @@ class TestEvalVisitor(unittest.TestCase):
 
         # assert
         self.assertEqual(["Hello Bazilio"], self.eval_visitor.outputs)
+
+    def test_euclides(self):
+        # arrange
+        parser = self.get_parser(
+            """
+### program that reads two integers and writes their greatest common divisor ###
+Euclides a b |:
+    while a /= b |:
+        if a > b |:
+            a <- a - b
+        :| else |:
+            b <- b - a
+        :|
+    :|
+    <w> a
+:|"""
+        )
+        ctx = parser.root()
+        self.eval_visitor.visitRoot(ctx)
+
+        parser = self.get_parser("""Euclides 6 12""")
+        ctx = parser.procedure_call()
+
+        # act
+        self.eval_visitor.visitProcedure_call(ctx)
+
+        # assert
+        self.assertEqual(["6"], self.eval_visitor.outputs)
+
+    def test_hanoi(self):
+        # arrange
+        parser = self.get_parser(
+            """
+### program that reads two integers and writes their greatest common divisor ###
+Hanoi n ori dst aux |:
+    if n > 0 |:
+        Hanoi (n - 1) ori aux dst
+        <w> ori "->" dst
+        Hanoi (n - 1) aux dst ori
+    :|
+:|"""
+        )
+        ctx = parser.root()
+        self.eval_visitor.visitRoot(ctx)
+
+        parser = self.get_parser("""Hanoi 3 1 2 3""")
+        ctx = parser.procedure_call()
+
+        # act
+        self.eval_visitor.visitProcedure_call(ctx)
+
+        # assert
+        self.assertEqual(
+            [
+                "1 -> 2",
+                "1 -> 3",
+                "2 -> 3",
+                "1 -> 2",
+                "3 -> 1",
+                "3 -> 2",
+                "1 -> 2",
+            ],
+            self.eval_visitor.outputs,
+        )
+
+    def test_hanoi_rec(self):
+        # arrange
+        parser = self.get_parser(
+            """
+Hanoi |:
+    src <- {C D E F G}
+    dst <- {}
+    aux <- {}
+    HanoiRec #src src dst aux
+:|
+
+HanoiRec n src dst aux |:
+    if n > 0 |:
+        HanoiRec (n - 1) src aux dst
+        note <- src[#src]
+        8< src[#src]
+        dst << note
+        (:) note
+        HanoiRec (n - 1) aux dst src
+    :|
+:|
+"""
+        )
+        ctx = parser.root()
+        self.eval_visitor.visitRoot(ctx)
+
+        parser = self.get_parser("""Hanoi""")
+        ctx = parser.procedure_call()
+
+        # act
+        self.eval_visitor.visitProcedure_call(ctx)
+
+        # assert
+        self.assertEqual(31, len(self.eval_visitor.score))
 
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ class EvalVisitor(BazilioVisitor):
 
     @property
     def actual_stack(self):
-        return self.stack[0]
+        return self.stack[-1]
     
     def visitProcedure(self, ctx:BazilioParser.ProcedureContext):
         proc_def = ProcedureDefinition(
@@ -63,13 +63,10 @@ class EvalVisitor(BazilioVisitor):
         self.actual_stack[var_name] = input_value
 
     def visitOutput_(self, ctx: BazilioParser.Output_Context):
-        if ctx.VAR() is None:
-            value = self.treat_string(ctx.STRING())
-        else:
-            var_name = ctx.VAR().getText()
-            value = self.actual_stack[var_name]
-        
-        self.outputs.append(value)
+        children = list(ctx.getChildren())[1:]
+        values = [self.visit(c) for c in children if c is not TerminalNode]
+        values = map(lambda x: str(x), values)        
+        self.outputs.append(" ".join(values))
 
     def visitReproduction(self, ctx: BazilioParser.ReproductionContext):
         expr_value = self.visit(ctx.expression())
@@ -97,11 +94,11 @@ class EvalVisitor(BazilioVisitor):
 
     def visitList_cut(self, ctx: BazilioParser.List_cutContext):
         var_name = ctx.VAR().getText()
-        index = self.visit(ctx.expression())
+        index = self.visit(ctx.expression()) - 1
         var_list = self.actual_stack[var_name]
         if index >= len(var_list):
             raise BazilioException("index out of range")
-        var_list.remove(index)
+        var_list.pop(index)
 
     def visitProcedure_call(self, ctx: BazilioParser.Procedure_callContext):
         param_values = self.visit(ctx.procedure_call_parameters())
@@ -205,4 +202,4 @@ class EvalVisitor(BazilioVisitor):
         var_name = ctx.VAR().getText()
         index = self.visit(ctx.expression())
         var = self.actual_stack[var_name]
-        return var[index]
+        return var[index - 1]

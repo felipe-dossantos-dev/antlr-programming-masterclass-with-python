@@ -22,7 +22,7 @@ assignment: VAR '<-' expression;
 
 input_: '<?>' VAR;
 
-output_: '<w>' (VAR | STRING);
+output_: '<w>' expression+;
 
 reproduction: '(:)' expression;
 
